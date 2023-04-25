@@ -12,7 +12,7 @@ const MiddleWareJWT = require("../middleware/jwt")
 const Router = require("express").Router()
 
 Router.post("/create", MiddleWareJWT.verifyToken ,createBlog)// done //
-Router.get("/", MiddleWareJWT.verifyToken ,getAllBlog) // done //
+Router.get("/",getAllBlog) // done //
 Router.delete("/deleteblog/:_id", MiddleWareJWT.verifyToken ,deleteBlog) // done //
 Router.put("/like/:_id", MiddleWareJWT.verifyToken ,likeBlog) // done //
 Router.put("/dislike/:_id", MiddleWareJWT.verifyToken ,disLikeBlog) // done //
