@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended : true }))
 const PORT = process.env.PORT || 3456
 
 
-db()
+db.connect()
 appRouter(app)
 
 

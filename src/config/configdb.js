@@ -1,15 +1,16 @@
-const { default : mongoose } = require("mongoose")
+const mongoose = require("mongoose");
 
-// cấu hình db
-const dbConnect = (async() => {
-    try {
-        const conn = await mongoose.connect(process.env.MONGODB_URI)
-        if(conn.connection.readyState === 1) console.log("DB connect successfully")
-        else console.log("DB connecting")
-    } catch (error) {
-        console.error("DB connect fail")
-        throw new Error("Err from server")
-    }
-})
+async function connect() {
+	try {
+		await mongoose.connect(process.env.MONGO_URI, {
+			useNewUrlParser: true,
+			useUnifiedTopology: true,
+		});
 
-module.exports = dbConnect
+		console.log("MongoDb Connect success");
+	} catch (error) {
+		console.log("MongoDb Connect failed");
+	}
+}
+
+module.exports = { connect };
