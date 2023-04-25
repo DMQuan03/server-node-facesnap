@@ -2,9 +2,7 @@ const express = require("express")
 const cors = require("cors")
 const appRouter = require("./src/routes/index")
 const db = require("./src/config/configdb")
-const app = express({
-    origin : "*"
-})
+const app = express()
 const jwt = require("jsonwebtoken")
 const socket = require("socket.io")
 
@@ -18,6 +16,13 @@ const Mess = require("./src/models/message")
 
 app.use(cors())
 
+app.get("/", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "*")
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Max-Age", "1800");
+    res.setHeader("Access-Control-Allow-Headers", "content-type");
+    res.setHeader( "Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, PATCH, OPTIONS" );
+});
 app.use(express.json())
 require("dotenv").config()
 app.use(express.urlencoded({ extended : true }))
