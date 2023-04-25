@@ -2,7 +2,9 @@ const express = require("express")
 const cors = require("cors")
 const appRouter = require("./src/routes/index")
 const db = require("./src/config/configdb")
-const app = express()
+const app = express({
+    origin : "*"
+})
 const jwt = require("jsonwebtoken")
 const socket = require("socket.io")
 
