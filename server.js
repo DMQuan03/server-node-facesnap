@@ -14,6 +14,10 @@ const Video = require("./src/models/video")
 const Rooms = require("./src/models/chatroom")
 const Mess = require("./src/models/message")
 
+// middleware
+const middleware = require("./src/middleware/jwt")
+const LoginUser = require("./src/controllers/user")
+
 app.use(cors())
 
 app.get("/", (req, res) => {
@@ -39,7 +43,7 @@ const server = app.listen(PORT , () => {
 
 const io = socket(server, {
     cors : {
-        origin : "http://localhost:3000",
+        origin : "https://lambent-meerkat-1c891c.netlify.app",
         credentials : true,
     }
 })
@@ -60,8 +64,6 @@ io.use(function (socket, next) {
     }
 })
 
-
-
 io.on("connection", async(socket) => {
     // config user when connect to server
     socket.username = socket.decoded.fullName
@@ -69,6 +71,7 @@ io.on("connection", async(socket) => {
     socket.userId = socket.decoded._id
     socket.role = socket.decoded.role
     socket.join(socket.decoded._id)
+    console.log(socket.decoded);
     await User.findByIdAndUpdate({ _id : socket.userId }, { $set : { isActive : true } })
     await User.findByIdAndUpdate({ _id : socket.userId }, { $set : { sorts : 1 } })
 
