@@ -43,26 +43,26 @@ const server = app.listen(PORT , () => {
 
 const io = socket(server, {
     cors : {
-        origin : "https://lambent-meerkat-1c891c.netlify.app/",
+        origin : "http://localhost:3000",
         credentials : true,
     }
 })
 
 global.onlineUser = new Map()
 
-io.use(function (socket, next) {
-    if (socket.handshake.query && socket.handshake.query.token) {
-        jwt.verify(socket.handshake.query.token, process.env.ACCESS_TOKEN, function (err, decoded) {
-            if (err) { return 0}
-            socket.decoded = decoded;
-            next();
-        });
-    }
-    else {
-        next(new Error('Authentication error'));
-        return 2
-    }
-})
+// io.use(function (socket, next) {
+//     if (socket.handshake.query && socket.handshake.query.token) {
+//         jwt.verify(socket.handshake.query.token, process.env.ACCESS_TOKEN, function (err, decoded) {
+//             if (err) { return 0}
+//             socket.decoded = decoded;
+//             next();
+//         });
+//     }
+//     else {
+//         next(new Error('Authentication error'));
+//         return 2
+//     }
+// })
 
 io.on("connection", async(socket) => {
     // config user when connect to server
