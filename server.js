@@ -43,7 +43,7 @@ const server = app.listen(PORT , () => {
 
 const io = socket(server, {
     cors : {
-        origin : "https://lambent-meerkat-1c891c.netlify.app",
+        origin : "https://lambent-meerkat-1c891c.netlify.app/",
         credentials : true,
     }
 })
