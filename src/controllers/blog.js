@@ -1,28 +1,37 @@
 const Blog = require("../models/blog")
 const User = require("../models/user")
 const Cmt = require("../models/comment")
+const ALLVIDEOANDBLOG = require("../models/videoandpost")
 
 const createBlog = async(req , res) => {
     try {
-        const {title , description, img} = req.body
+        const {title , img} = req.body
         if (!title) return res.status(404).json({
             message : "missing input"
         })
         const newBlog = await new Blog({
             title,
             userId : req.user._id,
-            description,
             img
         })
-        const { _id , ...rest  } = newBlog
-        const user = await User.updateOne({_id : req.user._id}, { $addToSet : { blog : _id } })
+        const user = await User.updateOne({_id : req.user._id}, { $addToSet : { blog : newBlog._id } })
         await newBlog.save()
+        const newVideoAndPost = await new ALLVIDEOANDBLOG({
+            title : req.body.title,
+            img : req.body.video,
+            userId : req.user._id,
+            idCateGory : newBlog._id,
+            category : "blog"
+        }) 
+        await newVideoAndPost.save()
+        await newVideoAndPost.populate("userId", "fullName _id avatar")
         return res.status(200).json({
             message : "successfully",
             success : true,
-            newBlog
+            newVideoAndPost
         })
     } catch (error) {
+        console.log(error);
         return res.status(500).json({
             message : error.message,
             success : false
@@ -74,6 +83,7 @@ const deleteBlog = async(req , res) => {
             }
             
             const user = await User.findByIdAndUpdate({_id : req.user._id}, { $pull : { blog : _id }})
+            await ALLVIDEOANDBLOG.findOneAndDelete({ idCateGory : _id})
             await Blog.findByIdAndDelete(_id)
             return res.status(200).json({
                 success : true,
@@ -87,6 +97,7 @@ const deleteBlog = async(req , res) => {
             })
         }
     } catch (error) {
+        console.log(error);
         return res.status(500).json({
             message : "ERROR from server",
             success : false
@@ -95,23 +106,16 @@ const deleteBlog = async(req , res) => {
 }
 
 const updateBlog = async(req , res) => {
+    console.log(req.params);
     try {
         const {_id} = req.params
         if(!_id) throw new Error("missing input")
         const onlyBlog = await Blog.findOne({ _id })
-        const {img , title} = req.body
-        if (!img) req.body.img = onlyBlog.img
+        const {title} = req.body
         if (!title) req.body.title = onlyBlog.title
-        if (req.body.img === "delete") {
-            req.body.img === ""
-            await Blog.findByIdAndUpdate({_id}, { $set : { img : null }})
-            await Blog.findByIdAndUpdate(_id , { title : req.body.title } , {new : true})
-            return res.status(200).json({
-                success : true
-            })
-        }
-        if ( onlyBlog.userId.toString() === req.user._id || req.user.role === "admin" ) {
+        if (onlyBlog.userId.toString() === req.user._id || req.user.role === "admin" ) {
             await Blog.findByIdAndUpdate(_id , req.body , {new : true})
+            await ALLVIDEOANDBLOG.findOneAndUpdate({ idCateGory : _id} , req.body , {new : true})
             return res.status(200).json({
                 success : true
             })
@@ -122,6 +126,7 @@ const updateBlog = async(req , res) => {
             })
         }
     } catch (error) {
+        console.log(error);
         return res.status(500).json({
             message : "fail",
             code : 500,
@@ -132,28 +137,19 @@ const updateBlog = async(req , res) => {
 const likeBlog = async(req , res) => {
     try {
         const { _id } = req.params
-        // const OnlyBlog = await Blog.findOne({_id})
-        
-        // if (!OnlyBlog.userLikes.includes(req.user._id) && !OnlyBlog.userDisLikes.includes(req.user._id)) {
             await Blog.findByIdAndUpdate(_id , {
                  $inc : { likes : 1 } 
                 }, {new : true})
             await Blog.updateOne({_id}, { $addToSet : { userLikes : req.user._id } }, {new : true} )
-        // }else if (OnlyBlog.userLikes.includes(req.user._id) && !OnlyBlog.userDisLikes.includes(req.user._id)) {
-        //     await Blog.findByIdAndUpdate(_id , {
-        //         $inc : { likes : -1 } 
-        //        }, {new : true})
-        //     await Blog.updateOne({_id}, { $pull : { userLikes : req.user._id } } , {new : true})
-        // }else if (!OnlyBlog.userLikes.includes(req.user._id) && OnlyBlog.userDisLikes.includes(req.user._id)) {
-        //     await Blog.findByIdAndUpdate(_id , {
-        //         $inc : { likes : 1 } 
-        //        }, {new : true})
-        //     await Blog.findByIdAndUpdate(_id , {
-        //         $inc : { disLikes : -1 } 
-        //     }, {new : true})
-        //     await Blog.updateOne({_id}, { $pull : { userDisLikes : req.user._id } }, {new : true})
-        //     await Blog.updateOne({_id}, { $addToSet : { userLikes : req.user._id } }, {new : true})
-        // }
+
+            await ALLVIDEOANDBLOG.findOneAndUpdate({idCateGory : _id}, 
+                {
+                    $inc : {
+                        likes : 1
+                    }
+                }, {new : true})
+            await ALLVIDEOANDBLOG.findOneAndUpdate({ idCateGory : _id }, { $addToSet : { userLikes : req.user._id }}, {new : true})
+   
         return res.status(200).json({
             success : true
         })
@@ -169,27 +165,15 @@ const likeBlog = async(req , res) => {
 const disLikeBlog = async(req , res) => {
     try {
         const { _id } = req.params
-        // const OnlyBlog = await Blog.findOne({_id})
-        // if (!OnlyBlog.userLikes.includes(req.user._id) && !OnlyBlog.userDisLikes.includes(req.user._id)) {
             await Blog.findByIdAndUpdate(_id , {
                  $inc : { likes : -1 } 
                 }, {new : true})
             await Blog.updateOne({_id}, { $pull : { userLikes : req.user._id } }, {new : true} )
-        // }else if (!OnlyBlog.userLikes.includes(req.user._id) && OnlyBlog.userDisLikes.includes(req.user._id)) {
-        //     await Blog.findByIdAndUpdate(_id , {
-        //         $inc : { disLikes : -1 } 
-        //        }, {new : true})
-        //     await Blog.updateOne({_id}, { $pull : { userDisLikes : req.user._id } } , {new : true})
-        // }else if (!OnlyBlog.userLikes.includes(req.user._id) && OnlyBlog.userDisLikes.includes(req.user._id)) {
-        //     await Blog.findByIdAndUpdate(_id , {
-        //         $inc : { disLikes : 1 } 
-        //        }, {new : true})
-        //        await Blog.findByIdAndUpdate(_id , {
-        //         $inc : { likes : -1 } 
-        //        }, {new : true})
-        //     await Blog.updateOne({_id}, { $pull : { userLikes : req.user._id } }, {new : true})
-        //     await Blog.updateOne({_id}, { $addToSet : { userDisLikes : req.user._id } }, {new : true})
-        // }
+
+            await ALLVIDEOANDBLOG.findOneAndUpdate({ idCateGory : _id } , {
+                $inc : { likes : -1 }
+               }, {new : true})
+           await ALLVIDEOANDBLOG.findOneAndUpdate({ idCateGory : _id }, { $pull : { userLikes : req.user._id } }, {new : true} )
         return res.status(200).json({
             success : true
         })
@@ -210,6 +194,10 @@ const shareBlog = async(req , res) => {
                 { shares : _id } }, {new : true})
         await Blog.findByIdAndUpdate(_id , { $inc : { shares : 1 } })
         await Blog.findByIdAndUpdate(_id , { $addToSet : { userShares : req.user._id } }, {new : true})
+        await ALLVIDEOANDBLOG.findOneAndUpdate({ idCateGory : _id } , {
+            $inc : { shares : 1 }
+           }, {new : true})
+        await ALLVIDEOANDBLOG.findOneAndUpdate({ idCateGory : _id }, { $addToSet : { userShares : req.user._id } }, {new : true} )
         return res.status(200).json({
             message : "share success",
             success : true
@@ -231,6 +219,10 @@ const unShareBlog = async(req , res) => {
                 { shares : _id } }, {new : true})
         await Blog.findByIdAndUpdate(_id , { $inc : { shares : -1 } })
         await Blog.findByIdAndUpdate(_id , { $pull : { userShares : req.user._id } }, {new : true})
+        await ALLVIDEOANDBLOG.findOneAndUpdate({ idCateGory : _id } , {
+            $inc : { shares : -1 }
+           }, {new : true})
+        await ALLVIDEOANDBLOG.findOneAndUpdate({ idCateGory : _id }, { $pull : { userShares : req.user._id } }, {new : true} )
         return res.status(200).json({
             message : "share success",
             success : true

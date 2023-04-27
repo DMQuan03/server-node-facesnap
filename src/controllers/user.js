@@ -496,20 +496,20 @@ const UserControllers = {
             const page = +req.query.page || 1
             const limit = +req.query.limit || process.env.LIMIT_PRODUCT
             const limitBlogs = +req.query.limitBlog || process.env.LIMIT_PRODUCT
-            const limitVideos = +req.query.limitVideo || process.env.LIMIT_PRODUCT
+            const limitVideos = +req.query.limitVideo || 5
             const skip = (page - 1) * limit
             const user = await User.find().limit(limit)
             const blog = await Blog.find().limit(limitBlogs).populate("userId", "_id avatar fullName").sort({ likes : -1 })
             const video = await Video.find().limit(limitVideos).populate("userId", "_id avatar fullName").sort({ likes : -1 })
-            const result = await user.filter((us) => {
-                return us.fullName.includes(q)
+            const result = await user?.filter((us) => {
+                return us?.fullName?.includes(q)
             })
-            const result1 = await blog.filter((us) => {
-                return us.userId.fullName.includes(q)
+            const result1 = await blog?.filter((us) => {
+                return us?.userId?.fullName.includes(q) || us?.title.includes(q)
             })
 
-            const result2 = await video.filter((us) => {
-                return us.title.includes(q) || us.userId.fullName.includes(q)
+            const result2 = await video?.filter((us) => {
+                return us?.title?.includes(q) || us?.userId?.fullName?.includes(q)
             })
 
             return res.status(200).json({

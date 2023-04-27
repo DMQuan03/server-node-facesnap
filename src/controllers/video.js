@@ -1,7 +1,41 @@
 const Video = require("../models/video")
 const User = require("../models/user")
 const Cmt = require("../models/comment")
+const ALLVIDEOANDBLOG = require("../models/videoandpost")
 const VideoController = {
+
+    createVideo : async( req , res) => {
+        console.log(req.body);
+        try {
+            const {video , title} = req.body
+            const newVideo = await new Video({
+                title,
+                video,
+                userId : req.user._id
+            })
+            await newVideo.save()
+            const newVideoAndPost = await new ALLVIDEOANDBLOG({
+                title,
+                video,
+                userId : req.user._id,
+                idCateGory : newVideo._id,
+                category : "video"
+            }) 
+            await newVideoAndPost.save()
+            newVideoAndPost.populate("userId", "fullName avatar _id")
+            await User.findByIdAndUpdate({ _id : req.user._id }, { $addToSet : { videos : newVideo._id } })
+            return res.status(200).json({
+                success : true,
+                newVideoAndPost
+            })
+        } catch (error) {
+            return res.status(500).json({
+                success : false,
+                message : "create Video fail"
+            })
+        }
+    },
+
     deleteVideo : async(req , res) => {
         try {
             const {_id} = req.params
@@ -53,11 +87,21 @@ const VideoController = {
         try {
             const { _id } = req.params
            
-                await Video.findByIdAndUpdate(_id , {
-                     $inc : { likes : 1 } 
-                    }, {new : true})
-                await Video.updateOne({_id}, { $addToSet : { userLikes : req.user._id } }, {new : true} )
+            await Video.findByIdAndUpdate(_id , {
+                 $inc : { likes : 1 } 
+                }, {new : true})
+            await Video.updateOne({_id}, { $addToSet : { userLikes : req.user._id } }, {new : true} )
+
+
+            await ALLVIDEOANDBLOG.findOneAndUpdate({idCateGory : _id}, 
+                {
+                    $inc : {
+                        likes : 1
+                    }
+                }, {new : true})
+            await ALLVIDEOANDBLOG.findOneAndUpdate({ idCateGory : _id }, { $addToSet : { userLikes : req.user._id }}, {new : true})
             
+
             return res.status(200).json({
                 success : true
             })
@@ -77,6 +121,11 @@ const VideoController = {
                      $inc : { likes : -1 } 
                     }, {new : true})
                 await Video.updateOne({_id}, { $pull : { userLikes : req.user._id } }, {new : true} )
+
+                await ALLVIDEOANDBLOG.findOneAndUpdate({ idCateGory : _id } , {
+                    $inc : { likes : -1 }
+                   }, {new : true})
+               await ALLVIDEOANDBLOG.findOneAndUpdate({ idCateGory : _id }, { $pull : { userLikes : req.user._id } }, {new : true} )
             return res.status(200).json({
                 success : true
             })
@@ -165,7 +214,6 @@ const VideoController = {
         }
     },
     searchVideo : async(req , res) => {
-        console.log(req.query);
         try {
             const { q , limit = 5 } = req.query
 

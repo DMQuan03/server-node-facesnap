@@ -6,7 +6,7 @@ const utilsRouter = require("./utils")
 
 const AppRouter = (app) => {
     app.use("/api/user", UserRouter)
-    app.use("/api/blog/", BlogRouter)
+    app.use("/api/blog", BlogRouter)
     app.use("/api/video", VideoRouter)
     app.use("/api/room", RoomRouter)
     app.use("/api/utils", utilsRouter)
