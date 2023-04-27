@@ -21,13 +21,13 @@ const LoginUser = require("./src/controllers/user")
 
 app.use(cors())
 
-app.get("/", (req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "*")
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Max-Age", "1800");
-    res.setHeader("Access-Control-Allow-Headers", "content-type");
-    res.setHeader( "Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, PATCH, OPTIONS" );
-});
+// app.get("/", (req, res) => {
+//     res.setHeader("Access-Control-Allow-Origin", "*")
+//     res.setHeader("Access-Control-Allow-Credentials", "true");
+//     res.setHeader("Access-Control-Max-Age", "1800");
+//     res.setHeader("Access-Control-Allow-Headers", "content-type");
+//     res.setHeader( "Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, PATCH, OPTIONS" );
+// });
 app.use(express.json())
 require("dotenv").config()
 app.use(express.urlencoded({ extended : true }))
@@ -44,8 +44,9 @@ const server = app.listen(PORT , () => {
 
 const io = socket(server, {
     cors : {
-        origin : "https://velvety-kheer-5d48e5.netlify.app",
+        origin : "*",
         credentials : true,
+        methods : ["GET", "PUT", 'PATCH', 'DELETE', 'POST']
     }
 })
 
