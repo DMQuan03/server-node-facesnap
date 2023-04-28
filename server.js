@@ -74,8 +74,10 @@ io.on("connection", async(socket) => {
     // socket.role = socket.decoded.role
     // socket.join(socket.decoded._id)
     // console.log(socket.decoded);
-    // await User.findByIdAndUpdate({ _id : socket.userId }, { $set : { isActive : true } })
-    // await User.findByIdAndUpdate({ _id : socket.userId }, { $set : { sorts : 1 } })
+    socket.on("user_online", async(data) => {
+        await User.findByIdAndUpdate({ _id : data.currentUserId }, { $set : { isActive : true } })
+        await User.findByIdAndUpdate({ _id : data.currentUserId }, { $set : { sorts : 1 } })
+    })
     socket.on("send_req_to_user_add", async(data) => {
         try {
             const UserOnly =await User.findOne({_id : data.data.userId})
@@ -479,31 +481,31 @@ io.on("connection", async(socket) => {
         }
     })
 
-    // socket.on("remove_comment_video", async(data) => {
-    //     try {
-    //         if (data.id) {
-    //             const onlyVideo = await Video.findOne({_id : data.idVideo}).populate("comment", "userId")
-    //             const dataComment = onlyVideo.comment
-    //             const result = dataComment.some((el) => {
-    //                 return el.userId.toString() === socket.userId && el._id.toString() === data.id
-    //             })
-    //             if (result || socket.role === "admin") {
-    //                     await Cmt.findByIdAndDelete({_id : data.id})
-    //                     await Video.findByIdAndUpdate({_id : data.idVideo}, { $pull : { comment : data.id} })
-    //                     socket.emit("remove_comment_video_success", data.id)
-    //                     return 1
-    //                 }else {
-    //                     console.log("bạn không thể xóa comment này");
-    //                     return 0
-    //                 }
-    //         }else {
-    //             console.log("tin nhắn vừa gửi chưa thể xóa ngay vui lòng reload lại");
-    //         }
-    //     } catch (error) {
-    //         console.log(error);
-    //     }
+    socket.on("remove_comment_video", async(data) => {
+        try {
+            if (data.id) {
+                const onlyVideo = await Video.findOne({_id : data.idVideo}).populate("comment", "userId")
+                const dataComment = onlyVideo.comment
+                const result = dataComment.some((el) => {
+                    return el.userId.toString() === socket.userId && el._id.toString() === data.id
+                })
+                if (result || socket.role === "admin") {
+                        await Cmt.findByIdAndDelete({_id : data.id})
+                        await Video.findByIdAndUpdate({_id : data.idVideo}, { $pull : { comment : data.id} })
+                        socket.emit("remove_comment_video_success", data.id)
+                        return 1
+                    }else {
+                        console.log("bạn không thể xóa comment này");
+                        return 0
+                    }
+            }else {
+                console.log("tin nhắn vừa gửi chưa thể xóa ngay vui lòng reload lại");
+            }
+        } catch (error) {
+            console.log(error);
+        }
 
-    // }) chua xong
+    }) 
     socket.on("disconnect", async() => {
         // await User.findByIdAndUpdate({ _id : socket.userId }, {$set : { isActive : false }})
         // await User.findByIdAndUpdate({ _id : socket.userId }, {$set : { sorts : 0 }})

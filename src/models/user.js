@@ -147,7 +147,26 @@ const User = new mongoose.Schema({
             type : mongoose.Types.ObjectId,
             ref : "RoomChat"
         }
-    ]
+    ],
+    cart : [
+        {
+            idProduct : {
+                type : mongoose.Types.ObjectId,
+                ref : "Product"
+            },
+            status :{ type : String,
+            default : "pending"},
+            quantity : {
+                type : Number,
+                default : 1,
+                required : true
+            },
+        }
+    ],
+    coins : {
+        type : Number,
+        default : 0
+    }
 
 },
     {timestamps : true}
